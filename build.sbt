@@ -9,8 +9,9 @@ lazy val `try-fail-stream` =
     .settings(settings)
     .settings(
       libraryDependencies ++= Seq(
-        library.scalaCheck % Test,
-        library.utest      % Test
+        library.akkaStreamTyped % Compile,
+        library.scalaCheck      % Test,
+        library.utest           % Test
       )
     )
 
@@ -21,11 +22,13 @@ lazy val `try-fail-stream` =
 lazy val library =
   new {
     object Version {
+      val akka       = "2.5.14"
       val scalaCheck = "1.14.0"
       val utest      = "0.6.4"
     }
-    val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck
-    val utest      = "com.lihaoyi"    %% "utest"      % Version.utest
+    val akkaStreamTyped = "com.typesafe.akka" %% "akka-stream-typed" % Version.akka
+    val scalaCheck      = "org.scalacheck"    %% "scalacheck"        % Version.scalaCheck
+    val utest           = "com.lihaoyi"       %% "utest"             % Version.utest
   }
 
 // *****************************************************************************
@@ -38,8 +41,7 @@ lazy val settings =
 
 lazy val commonSettings =
   Seq(
-    // scalaVersion from .travis.yml via sbt-travisci
-    // scalaVersion := "2.12.4",
+    scalaVersion := "2.12.6",
     organization := "rocks.heikoseeberger",
     organizationName := "Heiko Seeberger",
     startYear := Some(2018),
