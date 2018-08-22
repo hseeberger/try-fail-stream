@@ -17,7 +17,7 @@
 package rocks.heikoseeberger.tryfailstream
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{ Merge, Source }
-import akka.stream.{ ActorMaterializer, Materializer }
+import akka.stream.{ ActorAttributes, ActorMaterializer, Materializer, Supervision }
 import scala.util.{ Failure, Success }
 
 object Main {
@@ -31,14 +31,20 @@ object Main {
 
     import system.dispatcher
 
+//    val decider: Supervision.Decider = {
+//
+//    }
+
     val foos =
       Source
         .fromIterator(() => Iterator.from(0))
+        .take(666)
         .map(Foo)
 
     val errors = // Notice the type: `Source[Nothing, _]`!
       Source
         .fromIterator(() => Iterator.from(0))
+//        .filterNot(_ == 42)
         .map(Bar)
         .collect {
           case Bar(n) if n == 42 =>
@@ -47,10 +53,17 @@ object Main {
 
     Source
       .combine(foos, errors)(Merge(_))
+      .withAttributes(ActorAttributes.supervisionStrategy {
+        case _: IllegalArgumentException => Supervision.Resume
+        case _                           => Supervision.Stop // Don't forget the default!
+      })
       .runForeach(println)
-      .onComplete {
+      .andThen {
         case Failure(cause) => println(s"FAILURE: $cause")
         case Success(_)     => println("Done")
+      }
+      .andThen {
+        case _ => system.terminate()
       }
   }
 }
